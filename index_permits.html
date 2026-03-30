@@ -144,11 +144,11 @@ td.actions-cell { white-space: nowrap; overflow: visible; }
   display: inline-block; padding: 3px 10px; border-radius: 12px;
   font-size: 11px; font-weight: 600; white-space: nowrap;
 }
-.badge-yes { background: var(--green-bg); color: var(--green); }
-.badge-no { background: var(--bg-input); color: var(--text-muted); }
+.badge-yes { background: var(--red-bg); color: var(--red); }
+.badge-no { background: var(--green-bg); color: var(--green); }
 .badge-conditional { background: var(--orange-bg); color: var(--orange); }
 .badge-true { background: var(--red-bg); color: var(--red); }
-.badge-false { background: var(--bg-input); color: var(--text-muted); }
+.badge-false { background: var(--green-bg); color: var(--green); }
 
 /* ── DETAIL / FORM PANEL ── */
 .overlay {
@@ -588,11 +588,25 @@ function populateStates() {
 
 function permitCategory(val) {
   if (!val) return 'none';
-  const v = val.toLowerCase();
-  if (v.includes('no, not required') || v.includes('no permits') || v === 'no') return 'no';
-  if (v.includes('yes') || v.includes("req'd") || v.includes('required') || v.includes('permit needed')) return 'yes';
-  if (v.includes('see notes') || v.includes('unless') || v.includes('only when') || v.includes('if ')) return 'conditional';
-  return 'none';
+  const v = val.toLowerCase().trim();
+  // Clear no's
+  if (v.includes('no, not required') || v.includes('no permits') || v === 'no' || v === 'no, not required') return 'no';
+  // Check if it matches a required pattern
+  const isRequired = v.includes('yes') || v.includes("req'd") || v.includes('required') || v.includes('permit needed');
+  if (!isRequired) {
+    if (v.includes('see notes') || v.includes('unless') || v.includes('only when') || v.includes('if ')) return 'conditional';
+    return 'none';
+  }
+  // It's required — but is it a simple yes or does it have special conditions?
+  const simplePatterns = [
+    'yes', "yes, reroof permit req'd", "yes, reroof perm req'd",
+    "yes, siding permit req'd", "yes, reroof permit req'd",
+    'yes, reroof perm', 'yes, siding perm'
+  ];
+  // If it's just "Yes" or a clean standard required phrase, it's a straight required
+  if (simplePatterns.includes(v) || v === "roof permit req'd" || v === "yes, reroof permit req'd") return 'yes';
+  // If it has extra text beyond a simple required, it's conditional (special circumstance)
+  return 'conditional';
 }
 
 function applyFilters() {
