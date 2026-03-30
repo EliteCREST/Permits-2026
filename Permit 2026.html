@@ -224,6 +224,40 @@ td.actions-cell { white-space: nowrap; overflow: visible; }
   padding-right: 28px;
 }
 .form-field select option { background: var(--bg-card); color: var(--text); }
+
+/* Notes history */
+.notes-block { display: flex; flex-direction: column; gap: 10px; }
+.notes-history {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  max-height: 200px; overflow-y: auto;
+}
+.notes-history:empty { display: none; }
+.note-entry {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; line-height: 1.5; color: var(--text);
+}
+.note-entry:last-child { border-bottom: none; }
+.note-timestamp {
+  font-size: 10px; font-weight: 600; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  margin-bottom: 3px; display: block;
+}
+.note-text { white-space: pre-wrap; }
+.notes-add-label {
+  font-size: 11px; font-weight: 600; color: var(--green);
+  text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px;
+}
+.notes-add-wrap textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 9px 12px; color: var(--text); font-size: 13px;
+  font-family: inherit; resize: vertical; min-height: 60px;
+  transition: border-color 0.2s;
+}
+.notes-add-wrap textarea:focus {
+  outline: none; border-color: var(--green); box-shadow: 0 0 0 3px rgba(46,164,79,0.12);
+}
+.notes-add-wrap textarea::placeholder { color: var(--text-muted); }
 .form-actions {
   display: flex; gap: 10px; justify-content: flex-end;
   padding: 16px 24px; border-top: 1px solid var(--border);
@@ -398,7 +432,7 @@ const FIELDS = [
   ['Gutters',           'Gutters',               'text',          'permit',  'half'],
   ['Windows',           'Windows (R&R)',         'text',          'permit',  'half'],
   ['Solar',             'Solar (D&R)',           'text',          'permit',  'half'],
-  ['Permit_Notes',      'Permit Notes',          'textarea',      'permit',  'full'],
+  ['Permit_Notes',      'Permit Notes',          'notes',         'permit',  'full'],
   ['Roof_Mid',          'Roof — Mid',            'text',          'inspection','half'],
   ['Roof_Mid_Photos',   'Roof Mid Photos',       'text',          'inspection','half'],
   ['Roof_Final',        'Roof — Final',          'text',          'inspection','half'],
@@ -408,8 +442,8 @@ const FIELDS = [
   ['Gutters_Insp',      'Gutters Inspection',    'text',          'inspection','half'],
   ['Windows_Insp',      'Windows (R&R) Insp',    'text',          'inspection','half'],
   ['Solar_Insp',        'Solar (D&R) Insp',      'text',          'inspection','half'],
-  ['Inspection_Notes',  'Inspection Notes',       'textarea',      'inspection','full'],
-  ['Additional_Notes',  'Additional Notes',       'textarea',      'inspection','full'],
+  ['Inspection_Notes',  'Inspection Notes',       'notes',         'inspection','full'],
+  ['Additional_Notes',  'Additional Notes',       'notes',         'inspection','full'],
 ];
 
 const GROUPS = {
@@ -494,6 +528,20 @@ function linkify(s) {
   if (!s) return '—';
   s = esc(s);
   return s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+
+function renderNotesView(val) {
+  if (!val || !val.trim()) return '';
+  const entries = parseNotes(val);
+  if (!entries.length) return '<div class="detail-notes">' + linkify(val) + '</div>';
+  let html = '<div class="notes-history" style="max-height:none;">';
+  for (const entry of entries) {
+    html += '<div class="note-entry">';
+    if (entry.timestamp) html += `<span class="note-timestamp">${esc(entry.timestamp)}</span>`;
+    html += `<span class="note-text">${linkify(entry.text)}</span></div>`;
+  }
+  html += '</div>';
+  return html;
 }
 
 // ══════════════════════════════════════════════
@@ -661,7 +709,7 @@ function openView(r) {
         <div class="detail-field"><label>Windows (R&R)</label><div class="val">${makeBadge(r.Windows,'permit')} ${esc(r.Windows)}</div></div>
         <div class="detail-field"><label>Solar (D&R)</label><div class="val">${makeBadge(r.Solar,'permit')} ${esc(r.Solar)}</div></div>
       </div>
-      ${r.Permit_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Permit Notes</label><div class="detail-notes">'+linkify(r.Permit_Notes)+'</div></div>' : ''}
+      ${r.Permit_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Permit Notes</label>' + renderNotesView(r.Permit_Notes) + '</div>' : ''}
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Inspection Requirements</div>
@@ -676,9 +724,9 @@ function openView(r) {
         <div class="detail-field"><label>Windows (R&R)</label><div class="val">${esc(r.Windows_Insp) || '—'}</div></div>
         <div class="detail-field"><label>Solar (D&R)</label><div class="val">${esc(r.Solar_Insp) || '—'}</div></div>
       </div>
-      ${r.Inspection_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Inspection Notes</label><div class="detail-notes">'+linkify(r.Inspection_Notes)+'</div></div>' : ''}
+      ${r.Inspection_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Inspection Notes</label>' + renderNotesView(r.Inspection_Notes) + '</div>' : ''}
     </div>
-    ${r.Additional_Notes ? '<div class="detail-section"><div class="detail-section-title">Additional Notes</div><div class="detail-notes">'+linkify(r.Additional_Notes)+'</div></div>' : ''}
+    ${r.Additional_Notes ? '<div class="detail-section"><div class="detail-section-title">Additional Notes</div>' + renderNotesView(r.Additional_Notes) + '</div>' : ''}
   `;
 
   $('formActions').style.display = 'flex';
@@ -711,6 +759,28 @@ function buildForm(record) {
       const noS = (!val || val === false || val === 'No' || val === 'false' || val === 'False') ? ' selected' : '';
       html += `<div class="form-field${cls}"><label>${label}</label>
         <select name="${key}"><option value="No"${noS}>No</option><option value="Yes"${yesS}>Yes</option></select></div>`;
+    } else if (type === 'notes') {
+      // Parse existing notes into entries and render as read-only history + add new
+      const entries = parseNotes(val);
+      html += `<div class="form-field${cls}"><label>${label}</label><div class="notes-block">`;
+      // Existing notes history
+      if (entries.length) {
+        html += '<div class="notes-history">';
+        for (const entry of entries) {
+          html += `<div class="note-entry">`;
+          if (entry.timestamp) html += `<span class="note-timestamp">${esc(entry.timestamp)}</span>`;
+          html += `<span class="note-text">${esc(entry.text)}</span></div>`;
+        }
+        html += '</div>';
+      }
+      // Hidden field to carry existing value
+      html += `<input type="hidden" name="${key}_existing" value="${esc(val)}">`;
+      // Add new note input
+      html += `<div class="notes-add-wrap">
+        <div class="notes-add-label">+ Add New Note</div>
+        <textarea name="${key}_new" rows="2" placeholder="Type a new note... (will be timestamped automatically)"></textarea>
+      </div>`;
+      html += '</div></div>';
     } else if (type === 'textarea') {
       html += `<div class="form-field${cls}"><label>${label}</label>
         <textarea name="${key}" rows="3">${esc(val)}</textarea></div>`;
@@ -724,9 +794,54 @@ function buildForm(record) {
   return html;
 }
 
+function parseNotes(val) {
+  if (!val || !val.trim()) return [];
+  const text = val.trim();
+  // Try to split on timestamp pattern: [MM/DD/YYYY HH:MM AM/PM] or [YYYY-MM-DD ...] 
+  const parts = text.split(/(?=\[\d{1,2}\/\d{1,2}\/\d{4}\s)|(?=\[\d{4}-\d{2}-\d{2}\s)/);
+  const entries = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    // Check if starts with timestamp bracket
+    const tsMatch = trimmed.match(/^\[([^\]]+)\]\s*([\s\S]*)/);
+    if (tsMatch) {
+      entries.push({ timestamp: tsMatch[1], text: tsMatch[2].trim() });
+    } else {
+      entries.push({ timestamp: '', text: trimmed });
+    }
+  }
+  return entries;
+}
+
+function formatTimestamp() {
+  const now = new Date();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const y = now.getFullYear();
+  let h = now.getHours();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const min = String(now.getMinutes()).padStart(2, '0');
+  return `[${m}/${d}/${y} ${h}:${min} ${ampm}]`;
+}
+
 function readForm() {
   const record = {};
   for (const [key, , type] of FIELDS) {
+    if (type === 'notes') {
+      const existingEl = $('detailBody').querySelector(`[name="${key}_existing"]`);
+      const newEl = $('detailBody').querySelector(`[name="${key}_new"]`);
+      const existing = existingEl ? existingEl.value : '';
+      const newNote = newEl ? newEl.value.trim() : '';
+      if (newNote) {
+        const stamped = formatTimestamp() + ' ' + newNote;
+        record[key] = existing ? stamped + '\n\n' + existing : stamped;
+      } else {
+        record[key] = existing;
+      }
+      continue;
+    }
     const el = $('detailBody').querySelector(`[name="${key}"]`);
     if (!el) continue;
     if (type === 'select-bool') {
