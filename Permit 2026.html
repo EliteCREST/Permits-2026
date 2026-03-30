@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permit Requirements Lookup | Elite Family of Brands</title>
+<style>
+:root {
+  --navy: #1B2A4A;
+  --blue: #1F5FAD;
+  --blue-light: #2B7DE0;
+  --gold: #C9A84C;
+  --gold-dim: #9A7E3A;
+  --bg: #0F1318;
+  --bg-card: #161B22;
+  --bg-card-hover: #1C2230;
+  --bg-input: #1C2230;
+  --border: #2A3040;
+  --border-focus: #1F5FAD;
+  --text: #E8ECF1;
+  --text-dim: #8892A4;
+  --text-muted: #5C6578;
+  --green: #2EA44F;
+  --green-bg: rgba(46,164,79,0.1);
+  --red: #CF5555;
+  --red-bg: rgba(207,85,85,0.1);
+  --orange: #D4892A;
+  --orange-bg: rgba(212,137,42,0.1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: linear-gradient(135deg, var(--navy) 0%, #0F1A30 100%);
+  border-bottom: 2px solid var(--blue);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; flex-shrink: 0;
+  position: relative; z-index: 100;
+}
+.app-header .brand { display: flex; align-items: center; gap: 14px; }
+.app-header .logo-icon {
+  width: 36px; height: 36px; background: var(--blue);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px; color: #fff;
+}
+.app-header h1 { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: 0.3px; }
+.app-header h1 span { color: var(--gold); }
+.header-meta { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
+.header-meta .count {
+  background: var(--bg-card); padding: 4px 12px; border-radius: 20px;
+  font-weight: 600; color: var(--gold);
+}
+.hdr-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); padding: 6px 14px; border-radius: 6px;
+  cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+}
+.hdr-btn:hover { border-color: var(--blue); color: var(--blue-light); }
+.hdr-btn.syncing { opacity: 0.6; pointer-events: none; }
+.hdr-btn.add-btn { border-color: var(--green); color: var(--green); }
+.hdr-btn.add-btn:hover { background: var(--green-bg); }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  padding: 14px 24px;
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-box { flex: 1; min-width: 220px; position: relative; }
+.search-box svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); width: 16px; height: 16px;
+}
+.search-box input {
+  width: 100%; padding: 10px 12px 10px 38px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px;
+  transition: border-color 0.2s;
+}
+.search-box input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(31,95,173,0.15); }
+.search-box input::placeholder { color: var(--text-muted); }
+.filter-select {
+  padding: 10px 32px 10px 12px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px;
+  appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%238892A4' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  min-width: 160px;
+}
+.filter-select:focus { outline: none; border-color: var(--border-focus); }
+.filter-select option { background: var(--bg-card); color: var(--text); }
+.result-count { font-size: 13px; color: var(--text-dim); padding: 0 8px; white-space: nowrap; }
+
+/* ── TABLE ── */
+.table-wrap { padding: 0 0 24px; overflow: auto; flex: 1; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1100px; }
+thead th {
+  background: var(--navy); color: var(--gold);
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 12px 14px; text-align: left;
+  position: sticky; top: 0; z-index: 50;
+  border-bottom: 2px solid var(--blue);
+  white-space: nowrap; cursor: pointer; user-select: none;
+}
+thead th:first-child, tbody td:first-child { padding-left: 24px; }
+thead th:last-child, tbody td:last-child { padding-right: 24px; }
+thead th:hover { color: #fff; }
+thead th .sort-arrow { margin-left: 4px; opacity: 0.4; font-size: 10px; }
+thead th.sorted .sort-arrow { opacity: 1; color: var(--gold); }
+tbody tr { cursor: pointer; transition: background 0.15s; }
+tbody tr:hover { background: var(--bg-card-hover); }
+tbody td {
+  padding: 10px 14px; font-size: 13px; vertical-align: top;
+  max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border);
+}
+td.jurisdiction { font-weight: 600; color: #fff; min-width: 160px; }
+td.state-cell { color: var(--text-dim); }
+td.actions-cell { white-space: nowrap; overflow: visible; }
+.row-action {
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  border-radius: 4px; color: var(--text-muted); font-size: 14px; transition: all 0.15s;
+}
+.row-action:hover { background: var(--bg-input); }
+.row-action.edit:hover { color: var(--blue-light); }
+.row-action.delete:hover { color: var(--red); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.badge-yes { background: var(--green-bg); color: var(--green); }
+.badge-no { background: var(--bg-input); color: var(--text-muted); }
+.badge-conditional { background: var(--orange-bg); color: var(--orange); }
+.badge-true { background: var(--red-bg); color: var(--red); }
+.badge-false { background: var(--bg-input); color: var(--text-muted); }
+
+/* ── DETAIL / FORM PANEL ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 200; animation: fadeIn 0.2s;
+}
+.overlay.open { display: block; }
+.detail-panel {
+  position: fixed; right: 0; top: 0; bottom: 0;
+  width: 620px; max-width: 95vw;
+  background: var(--bg-card); border-left: 2px solid var(--blue);
+  z-index: 201; overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: -8px 0 30px rgba(0,0,0,0.4);
+  display: flex; flex-direction: column;
+}
+.detail-panel.open { transform: translateX(0); }
+.detail-header {
+  padding: 18px 24px; background: linear-gradient(135deg, var(--navy), #14203A);
+  border-bottom: 2px solid var(--blue);
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-shrink: 0;
+}
+.detail-header h2 { font-size: 20px; color: #fff; font-weight: 700; }
+.detail-header .sub { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+.detail-close {
+  background: none; border: none; color: var(--text-dim);
+  font-size: 24px; cursor: pointer; padding: 4px; line-height: 1;
+}
+.detail-close:hover { color: #fff; }
+.detail-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
+.detail-section { margin-bottom: 20px; }
+.detail-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--gold);
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+}
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail-field label {
+  display: block; font-size: 11px; color: var(--text-muted);
+  margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.detail-field .val { font-size: 14px; color: var(--text); line-height: 1.5; }
+.detail-field .val a { color: var(--blue-light); text-decoration: none; }
+.detail-field .val a:hover { text-decoration: underline; }
+.detail-field.full { grid-column: 1 / -1; }
+.detail-notes {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap;
+}
+
+/* ── FORM STYLES ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-field { display: flex; flex-direction: column; }
+.form-field.full { grid-column: 1 / -1; }
+.form-field label {
+  font-size: 11px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 5px;
+}
+.form-field input, .form-field select, .form-field textarea {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 9px 12px; color: var(--text); font-size: 13px;
+  font-family: inherit; transition: border-color 0.2s;
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(31,95,173,0.12);
+}
+.form-field textarea { resize: vertical; min-height: 70px; }
+.form-field select { appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%238892A4' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 28px;
+}
+.form-field select option { background: var(--bg-card); color: var(--text); }
+.form-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 16px 24px; border-top: 1px solid var(--border);
+  background: var(--bg-card); flex-shrink: 0;
+}
+.btn {
+  padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent; transition: all 0.2s;
+}
+.btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-primary:hover { background: var(--blue-light); }
+.btn-danger { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+.btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
+.btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+.btn-edit { background: var(--bg-input); color: var(--blue-light); border-color: var(--blue); }
+.btn-edit:hover { background: rgba(31,95,173,0.15); }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; top: 80px; right: 24px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4); animation: slideIn 0.3s;
+  display: flex; align-items: center; gap: 10px; min-width: 260px;
+}
+.toast-success { background: #14352a; color: var(--green); border: 1px solid rgba(46,164,79,0.3); }
+.toast-error { background: #351a1a; color: var(--red); border: 1px solid rgba(207,85,85,0.3); }
+.toast-info { background: #1a2640; color: var(--blue-light); border: 1px solid rgba(43,125,224,0.3); }
+
+/* ── CONFIRM DIALOG ── */
+.confirm-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 300; align-items: center; justify-content: center;
+}
+.confirm-overlay.open { display: flex; }
+.confirm-box {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 28px; max-width: 420px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.confirm-box h3 { font-size: 16px; color: #fff; margin-bottom: 10px; }
+.confirm-box p { font-size: 14px; color: var(--text-dim); line-height: 1.5; margin-bottom: 20px; }
+.confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text-muted); }
+.empty-state svg { margin-bottom: 16px; opacity: 0.3; }
+.empty-state p { font-size: 15px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .app-header { padding: 0 14px; }
+  .app-header h1 { font-size: 15px; }
+  .toolbar { padding: 12px 14px; }
+  .detail-grid, .form-grid { grid-template-columns: 1fr; }
+  .header-meta .count { display: none; }
+}
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes slideIn { from { transform: translateX(40px); opacity:0 } to { transform: translateX(0); opacity:1 } }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="brand">
+    <div class="logo-icon">E</div>
+    <h1>Permit <span>Lookup</span></h1>
+  </div>
+  <div class="header-meta">
+    <span class="count" id="totalCount">0 jurisdictions</span>
+    <button class="hdr-btn add-btn" id="addBtn" title="Add New Jurisdiction">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Add New
+    </button>
+    <button class="hdr-btn" id="syncBtn" title="Sync from Google Sheet">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Sync
+    </button>
+  </div>
+</header>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search jurisdictions, states, phone..." autocomplete="off">
+  </div>
+  <select class="filter-select" id="stateFilter"><option value="">All States</option></select>
+
+  <span class="result-count" id="resultCount"></span>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th data-col="Jurisdiction">Jurisdiction <span class="sort-arrow">▼</span></th>
+      <th data-col="State">State <span class="sort-arrow">▼</span></th>
+      <th data-col="Phone">Phone <span class="sort-arrow">▼</span></th>
+      <th data-col="Roofing">Roofing <span class="sort-arrow">▼</span></th>
+      <th data-col="Siding">Siding <span class="sort-arrow">▼</span></th>
+      <th data-col="Gutters">Gutters <span class="sort-arrow">▼</span></th>
+      <th data-col="Windows">Windows <span class="sort-arrow">▼</span></th>
+      <th data-col="Solar">Solar <span class="sort-arrow">▼</span></th>
+      <th data-col="Contractor_Reg">Contractor Reg <span class="sort-arrow">▼</span></th>
+      <th style="cursor:default;">Actions</th>
+    </tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <p>No jurisdictions match your search</p>
+  </div>
+</div>
+
+<!-- DETAIL / FORM PANEL -->
+<div class="overlay" id="overlay"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div>
+      <h2 id="detailTitle"></h2>
+      <div class="sub" id="detailSub"></div>
+    </div>
+    <button class="detail-close" id="detailClose">&times;</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+  <div class="form-actions" id="formActions" style="display:none;"></div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Confirm Delete</h3>
+    <p id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA & CONFIG
+// ══════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxSb64tAUAt9yfRaGCulfWx6JYZFurkC65ZeMyFn3lSSUD5PFTH_TACXnnyIIcWdZ0_kA/exec';
+let DATA = [{"Jurisdiction":"Addison, Town of","State":"Wisconsin","Type":"Residential","Date_Verified":"2025-09-11","Website":"","Phone":"262-629-5420","Email":"zoning@addisonwi.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://addisonwi.gov/formslicenseandpermits","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"email permit app to  zoning@addisonwi.gov    they will send you amount to pay online On their payment portal, choose building permit: call them for the permit #.   When permit is paid, work can begin per Brenda w/Village. All roof repairs requires permit; Windows D&R and Solar D&R no permit if like for like. Payment of permit can be made through their website, payment reference will be the permit number from the permit app form.  Payment link in additional notes","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"roof requires a notice of completion","Additional_Notes":"https://addisonwi.gov/paymentportal"},{"Jurisdiction":"Albany, Town of","State":"Indiana","Type":"Residential","Date_Verified":"","Website":"","Phone":"5371","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Unless Structural","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Albertville","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"https://www.albertvillemn.gov/business/building-department","Phone":"63-497-3384 ext. 3","Email":"maeghanb@albertvillemn.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.albertvillemn.gov/business/building-department","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"Online Payment links to bottom of the page.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Alexandria, City of","State":"Indiana","Type":"Residential","Date_Verified":"","Website":"","Phone":"(765) 724-4633","Email":"alexbc@cityofalexandria.in.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Permit application can be emailed to: alexbc@cityofalexandria.in.gov He will notify us once the permit can be paid for in person. Once payment is made permit will be released same day at the office--INPERSON ONLY. Office Address:  125 North Wayne St. The office is located on the second floor of City Hall.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, must be in person w/ladder","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Call (765) 724-4633 ask for Bill Marling (Building Commissioner) when tearing off roof, Bill will be there to perform inspections, Ice & Water, Mid, Final, and other inspection needed.","Additional_Notes":""},{"Jurisdiction":"Andover","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"https://www.andovermn.gov/138/Permit-License-Applications-and-PERMITS-","Phone":"63-755-8700","Email":"building@andovermn.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Arnold City of","State":"Missouri","Type":"Residential","Date_Verified":"2025-03-27","Website":"https://public.mygov.us/arnold_mo/module?module=pi","Phone":"636-282-2378","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://public.mygov.us/arnold_mo/module?module=pi","Roofing":"Yes, reroof permit req'd","Siding":"if siding only, No permit required","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"put STORM DAMAGE in descrition to expedite permit if applicable; put \"Ice and Water in eaves and valleys, Drip Edge around perimeter\" in description to expedite roof permits; upload Hover when applying;","Roof_Mid":"No, not required","Roof_Mid_Photos":"Ice & Water photos Required","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"No inspections on Fridays.","Additional_Notes":""},{"Jurisdiction":"Ashford Town of","State":"Wisconsin","Type":"Residential","Date_Verified":"2026-01-20","Website":"","Phone":"(414) 333-9696","Email":"jtflasch@frontier.com","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"per Brian Kober, Bldg Inspector NPN  for roof siding windows"},{"Jurisdiction":"Aurora City of","State":"Illinois","Type":"Residential","Date_Verified":"2025-12-05","Website":"","Phone":"630-256-3130","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.aurora.il.us/Property-and-Business/Permits","Roofing":"Yes, reroof permit req'd","Siding":"No, not required","Gutters":"No, not required","Windows":"Yes - see notes","Solar":"","Permit_Notes":"1. Apply on Etrakit in Homeowner section.  Will need to upload contract & permit application, pg 3 of permit app needs to be filled out by Sales Rep & returned to CSA","Roof_Mid":"No, not required","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Avon Lake","State":"Ohio","Type":"","Date_Verified":"2025-12-09","Website":"","Phone":"(440) 933-6141 Julie","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://avonlakeoh.portal.opengov.com/","Roofing":"Roof permit needed only when any decking is replaced","Siding":"Yes","Gutters":"Yes","Windows":"No, not required","Solar":"Yes","Permit_Notes":"For re-roof shingles replacement like for like- No permit needed. BUT, if after tearing off the shingles and a rotten plywood needs to be replaced, we will need to apply for a permit. Per Julie of Avon Lake that there won't be any sanction if we find out that the plywood is rotten after tearing-off the shingles, that's the time we need to apply for a permit.   Solar D&R, gutters and siding requires a permit.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Avondale","State":"Arizona","Type":"Residential","Date_Verified":"","Website":"","Phone":"623-333-4000","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://aca-prod.accela.com/AVONDALE/login.aspx?ReturnUrl=/AVONDALE/Dashboard.aspx","Roofing":"Roof permit needed when decking is replaced","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"no permit is needed for reshingling unless we are changing more than 2 sheets of plywood","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"Secret Question:"},{"Jurisdiction":"Ballwin","State":"Missouri","Type":"Residential","Date_Verified":"2025-09-25","Website":"https://www.ballwin.mo.us/Online-Permits-and-License-Renewal/","Phone":"636-227-9000","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Final inspection , it depends on the permit if they will do mid inspection.  Window permit only if changing the size of the hole/location.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"Permit application will be submitted through email and payment and permit itself will be picked up in person."},{"Jurisdiction":"Baltimore City of","State":"Maryland","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://aca-prod.accela.com/BALTIMORE/Default.aspx","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Baltimore County of","State":"Maryland","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://cityworkspro.baltimorecountymd.gov/PLLPortal/","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Roof - any repairs/alteration requires a permit. Gutters - they require permit (plumber will apply for permit for gutter) Siding, Windows (D&R), Solar (D&R) requires a permit BUT if on Solar it is less than 10kWh no permit is needed. No need for Contractor registration as long as we have MHIC.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Barnhart","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.civicgov4.com/mo_jeffersoncounty/portal/","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"They don't require permit if re-roofing only. But if there is a structural repair they'll require permit. Window d&r no permit but if closing up the location, change in location, size they will require permit.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"Window permit is required if you are changing the size of the opening, expanding the window, or performing structural work"},{"Jurisdiction":"Bedford","State":"Ohio","Type":"Residential","Date_Verified":"2025-12-16","Website":"On line Portal","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"On line Portal","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bel Nore City Of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"314-381-2834","Email":"https://www.cityofbelnor.org/codes-ordinances","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.cityofbelnor.org/codes-ordinances","Roofing":"Yes, reroof permit req'd","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bela Villa City Of","State":"Missouri","Type":"Residential","Date_Verified":"0/02/2025","Website":"","Phone":"314-638-8840","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Mail or drop off permit app, clerk will email back $ cost of permit.  Pymt by check or cash, they will email the permit to us and mail the original.  Call , John Franklin, will perform the inspection, 314-574-5830.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bellefontaine Neighbors","State":"Missouri","Type":"Residential","Date_Verified":"2025-03-06","Website":"","Phone":"314-867-0076","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.cityofbn.com/departments/building","Roofing":"Yes, reroof permit req'd","Siding":"Yes, siding permit req'd when changing siding materials","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"leave contractor search bar empty!  they will email link to pay w/CC","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Belleville","State":"Illinois","Type":"Residential","Date_Verified":"2025-04-11","Website":"https://belleville.net/","Phone":"618-233-6817","Email":"","Contractor_Reg":true,"Business_License":true,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"No re-roof permit needed unless replacing decking or structural. No license needed unless pulling a permit.","Roof_Mid":"Yes","Roof_Mid_Photos":"Ice & Water photos Required","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bolingbrook Village of","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"","Phone":"630-226-8470","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://bolingbrookil.portal.opengov.com/","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"no permit needed for soffit & fascia; separate permits required for each trade; skylights require a separate window permit","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"Yes, in progress & final","Solar_Insp":"","Inspection_Notes":"72 hours notice for all inspections","Additional_Notes":"if permit is canceled within 60 days of payment, BB will refund 1/2 of cost of permit"},{"Jurisdiction":"Bond County","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"https://us.cloudpermit.com/gov/dashboard","Phone":"(618) 237-9737","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://us.cloudpermit.com/gov/dashboard","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"CloudPermit;","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Boone County","State":"Illinois","Type":"Residential","Date_Verified":"2026-02-05","Website":"https://www.boonecountyil.gov/government/departments/building___zoning/index.php","Phone":"(815) 544-6176","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://us.cloudpermit.com/gov/dashboard","Roofing":"","Siding":"","Gutters":"","Windows":"Permit required","Solar":"","Permit_Notes":"no contractor's registration required; permit can be applied for through Cloudpermit portal","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"Yes, final","Solar_Insp":"","Inspection_Notes":"homeowner must be present for final inspection","Additional_Notes":""},{"Jurisdiction":"Brentwood","State":"Missouri","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://web.mygov.us/authentication/login/","Phone":"(314) 963-8602","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Roof permit needed no matter what.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bridgeton","State":"Missouri","Type":"Residential","Date_Verified":"2025-09-29","Website":"https://www.bridgetonmo.com/","Phone":"(314) 739-7665","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.bridgetonmo.com/","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"No, not required","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Mid inspection to insect framing and final.","Additional_Notes":"mail permit app & Zoning Certificate application, & check if needed; H.O. must sign permit app;  if no fee is due, can email permit app to:  amorrow@bridgetonmo.gov                 you'll be notified by email when permit is approved, if no pymt is required, they can email permit card to you"},{"Jurisdiction":"Brook Park","State":"Ohio","Type":"","Date_Verified":"","Website":"https://www.cityofbrookpark.com/building-department/","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.cityofbrookpark.com/building-department/","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Brooklyn","State":"Ohio","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://www.brooklynohio.gov/","Phone":"216-351-2133","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.brooklynohio.gov/158/Building-Department","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Brooklyn Park","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"apply online, photos onsite, request inspection online, final only","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes, pictures req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Buffalo Grove","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"https://www.vbg.org/297/Contractor-Registration","Phone":"","Email":"permits@vbg.org","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Bullhead City","State":"Arizona","Type":"","Date_Verified":"2025-12-30","Website":"bhcbusinesslicense@bullheadcityaz.gov","Phone":"928-763-0110","Email":"dsevi@bullheadcityaz.gov","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Byrnes Mill","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"Yes - see notes","Solar":"Yes","Permit_Notes":"Like for like replaements on roof doesn't require permit. Windows need a permit if installing new or making changes to existing hole.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Carmel","State":"Indiana","Type":"Residential","Date_Verified":"2026-03-03","Website":"https://cw.carmel.in.gov/publicaccess/home/home","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://cw.carmel.in.gov/publicaccess/home/home","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Casa Grande City of","State":"Arizona","Type":"Residential","Date_Verified":"","Website":"https://az-casagrande.civicplus.com/231/Building","Phone":"520-421-8630","Email":"dcpermits2@gmail.com","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Roof permit req'd - see notes","Siding":"Siding permit req'd - see notes","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"Permit is not required for like-for-like projects, including solar d&r. Permits ARE required for any replacement of decking, structural changes, or any projects that are not like-for-like replacements.  If a permit is required, email to dcpermits2@gmail.com; requires property owner signature","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Catawissa","State":"Missouri","Type":"","Date_Verified":"2025-08-26","Website":"","Phone":"636-797-5310","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"in Jefferson County MO-permit needed if structural changes","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"","Additional_Notes":"Permit it required for structural changes -- Truss. They require permit on Solar (D&R), Window (R&R) will only require permit if removing, changing the size, location,frame."},{"Jurisdiction":"Cedar Hill","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"(636) 797-5352","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"No permit unless making structural changes.  Permit needed to D&R solar panels.  Window  peremit needed if making structural changes/change in size of hole.  Business license & contractor reg issued by the city are required before we can apply for permit.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Inspection depends on the permit.","Additional_Notes":""},{"Jurisdiction":"Cedar Hill","State":"Missouri","Type":"COMMERCIAL","Date_Verified":"2026-02-06","Website":"https://www.civicgov4.com/mo_jeffersoncounty/portal/index.php?r=portalPosts/view&id=5","Phone":"(636) 797-5310","Email":"","Contractor_Reg":true,"Business_License":true,"Permit_Portal":"https://www.civicgov4.com/mo_jeffersoncounty/portal/index.php?r=site/login","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"Yes","Windows":"Yes","Solar":"Yes","Permit_Notes":"Permit needed for any type of construction work performed on commercial buildings in Cedar Hill.","Roof_Mid":"Yes","Roof_Mid_Photos":"No, not required","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"Yes","Inspection_Notes":"Mid and final inspections needed when making alteration to any structural.","Additional_Notes":""},{"Jurisdiction":"Chesterfield","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"(314) 615-5184","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://stlouiscountymo.gov/","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"follows St Louis County permittting: *A building permit is required to re-roof with asphalt shingles if Roof Slope is less than 4:12;  if more than 25% of Roof Sheathing requires replacement; if changing roof covering from existing; or Wood structural panel sheathing is required to replace existing board sheathing, because the gaps between the boards exceed space limits of the Code; SIDING -no permit needed when new aluminum, steel or vinyl exterior siding with no change to existing openings;","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Mid and final inspections required when replacing sheathing.  In person inspections through St. Louis County.","Additional_Notes":"if a permit IS needed, fill this out first, send to Chesterfield, when approved it goes to StL County.  send contract with signed MZA; there are 2 signatures requred, the \"exterior residential project portion\" and the property owner section\".  Windows/skylight r&r no permit if the same window size and location.  A Municipal Zoning Approval application form needs to fill out and send to: MZA@chesterfield.mo.us"},{"Jurisdiction":"Chicago Heights","State":"Illinois","Type":"Residential","Date_Verified":"2025-12-12","Website":"https://cityofchicagoheights.org/","Phone":"708-756-5328","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://cityofchicagoheights.org/176/Code-Enforcement","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"Yes","Windows":"Yes","Solar":"","Permit_Notes":"","Roof_Mid":"No, not required","Roof_Mid_Photos":"","Roof_Final":"No, not required","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Chisago County","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"https://chisagocountymn-energovweb.tylerhost.net/apps/selfservice#/home","Phone":"651-213-8317","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"City of Moline","State":"Illinois","Type":"Residential","Date_Verified":"2025-12-08","Website":"https://www.moline.il.us/429/General-Contractor","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Clarkson Valley","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-09","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Clayton City Of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"(314) 290-8572","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.claytonmo.gov/","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"No permit is needed for roof replacement like for like, siding and gutter unless there is structural changes or  tear up portions of the roof underneath. Window requires permit if there's changes with the opening size","Roof_Mid":"Inspection must be in person","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"Yes","Inspection_Notes":"Roof mid and final in person inspection required if replacing sheathing.  Window mid and final needed if altering the hole or making any structural changes.  Solar D&R in person mid and final inspection required.","Additional_Notes":""},{"Jurisdiction":"Clayton County","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"314-727-8100;314-704-0680(Hobie Kropp)","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"must either drop off permit app w/contract in person or by mail ONLY, include ice & water and drip edge details on app, get check from corp. when they call you with $ total (have it sent to local office because it has to be dropped off and permit has to be picked up in person!) M-F 8-4","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Cleveland City of","State":"Ohio","Type":"","Date_Verified":"2025-12-09","Website":"","Phone":"216-664-3618","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://aca-prod.accela.com/COC/Default.aspx","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Cochise County","State":"Arizona","Type":"Residential","Date_Verified":"2026-01-21","Website":"","Phone":"(520) 432-9300","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"Yes, siding permit req'd when changing siding materials","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Like for like no permit. They will only allow 2 layers. Gutters no permit. Siding no permit as long as like for like. Windows D&R- no permit for like for like. Solar (D&R) yes to permit. Deck replacement doesn't require permit","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Once a permit is issued there will be an inspection. It will depend on the permit issued if the inspector will do mid or final inspection. For roofing, inspector will most likely do a deck inspection so it's better to contact the county.","Additional_Notes":""},{"Jurisdiction":"Collier County","State":"Florida","Type":"Residential","Date_Verified":"2025-12-08","Website":"https://cvportal.colliercountyfl.gov/cityviewweb/","Phone":"","Email":"contreg@ecs-brands.com","Contractor_Reg":true,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Collinsville","State":"Illinois","Type":"Residential","Date_Verified":"2025-05-01","Website":"https://www.collinsvilleil.org/departments/community-development/building-permits-and-inspections","Phone":"(618) 346-5200 EXT. 1124","Email":"srobinson@collinsvilleIL.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.collinsvilleil.org/departments/community-development/building-permits-and-inspections","Roofing":"Yes, reroof permit req'd","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"email permit app, contract, roof license to Shawna  at   srobinson@collinsvilleIL.org  then put in check request to be sent direct to City. She will email permit & receipt back when pymt is received.  $50 for roof permit.  Widow permit needed only when changing the hole size.  Can mail in a check or CC in person.  Permit valid for 6 months.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Columbus","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"https://www.ci.columbus.mn.us/index.asp?Type=B_LIST&SEC={112378A1-8BC7-4C1B-8040-1822D5455595}","Phone":"651-464-3120","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"Require\u00a0the\u00a0contractor\u00a0to\u00a0call\u00a0us\u00a0at\u00a0(952)\u00a0442\u20107520\u00a0at\u00a0least\u00a0one\u00a0day\u00a0prior\u00a0to\u00a0starting\u00a0the\u00a0work\u00a0to\u00a0schedule\u00a0a\u00a0half\u2010way\u00a0inspection\u00a0(while\u00a0the\u00a0work\u00a0is\u00a0underway)","Roof_Mid":"","Roof_Mid_Photos":"Ice & Water photos Required","Roof_Final":"Yes, pictures req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"Yes, final","Solar_Insp":"","Inspection_Notes":"In person Siding Mid Required.","Additional_Notes":""},{"Jurisdiction":"Commerce City","State":"Colorado","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://www.c3gov.com/Business-Development/eTRAKiT-Portal","Phone":"303-289-3790","Email":"cdpermits@c3gov.com","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Coon Rapids","State":"Minnesota","Type":"Residential","Date_Verified":"","Website":"https://www.coonrapidsmn.gov/695/Building-Permits---Residential","Phone":"763-767-6476","Email":"buildinginsp@coonrapidsmn.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"BS&A account","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Ice barrier, underlayment, and final inspection. Call 763-767-6476 to schedule your required inspections.","Additional_Notes":""},{"Jurisdiction":"Cottonwood, City of","State":"Arizona","Type":"COMMERCIAL","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://us.cloudpermit.com/gov/login","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Crestwood","State":"Missouri","Type":"Residential","Date_Verified":"2025-01-05","Website":"wildwoodroof","Phone":"(314) 729-4720","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"wildwoodroof","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"*no roof permits unless 25% or more of decking to be replaced, no siding, no gutters, no window permits needed","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Dardenne Prairie","State":"Missouri","Type":"Residential","Date_Verified":"2025-07-14","Website":"","Phone":"(636) 651-1718 (Jeff)","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"If new construction, changing the material, structure they require permit","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"De Soto","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Deephaven","State":"Minnesota","Type":"Residential","Date_Verified":"2025-10-02","Website":"https://cdn.townweb.com/cityofdeephaven.org/wp-content/uploads/2026/01/Building-Permit-Form-Deephaven-2026-Fillable.pdf","Phone":"763-479-1720","Email":"info@cityofdeephaven.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"To be sent via email, mail or walk in. Diane Schwalbe at (952) 358-9935","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"No, not required","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"Reroof, sidings, and window replacement requires permit. No contractor registration or business license is needed. Mid and final inspections are required for reroof, sidings, and window. After we email the permit application form, city will inform us back with the permit fee. Solar D&R needs permit.","Additional_Notes":""},{"Jurisdiction":"Dellwood","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-09","Website":"https://ci-dellwood-mo.smartgovcommunity.com/Public/Home","Phone":"(314) 521-4339 (Pamela x109)","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://ci-dellwood-mo.smartgovcommunity.com/Public/Home","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Do NOT pull permit until job is ready to be produced! Permits valid for only 30 days! NO extensions given!  30 DAYS!! no extensions allowed  Pay onlice with CC.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.  Windows also if changing shape or hole or making any other structural changes.","Additional_Notes":""},{"Jurisdiction":"Dittmer","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-10","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Unincorporated Jefferson County.  wiindow permit only needed if making structural changes.","Roof_Mid":"","Roof_Mid_Photos":"No, not required","Roof_Final":"No, not required","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"No, not required","Gutters_Insp":"No, not required","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.  Windows also need mid and final if changing shape or hole or making any other structural changes.","Additional_Notes":""},{"Jurisdiction":"Dupo Village Of","State":"Illinois","Type":"Residential","Date_Verified":"2026-02-10","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Window permit only needed if making structral changes.","Roof_Mid":"No, not required","Roof_Mid_Photos":"No, not required","Roof_Final":"No, not required","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"No, not required","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"Yes","Inspection_Notes":"Window mid and final only needed if making structural changes.  Solar D&R need mid and final inspection.","Additional_Notes":""},{"Jurisdiction":"East Chicago","State":"Indiana","Type":"","Date_Verified":"2025-12-05","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Edmundson City Of","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-10","Website":"","Phone":"(314) 428-7125","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"No roof permit needed unless structural changes are involved.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"Siding inspection mid needed to verify I&W and final.","Additional_Notes":""},{"Jurisdiction":"Edwardsville City Of","State":"Illinois","Type":"Residential","Date_Verified":"2026-02-10","Website":"https://www.cityofedwardsville.com/213/Public-Works-Forms-Applications","Phone":"(618) 692-7535","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.cityofedwardsville.com/213/Public-Works-Forms-Applications","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"Roof $25, siding $30.  Can pay over the phone w/CC","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"Yes, final","Solar_Insp":"Yes","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Elk Grove Village","State":"Illinois","Type":"Residential","Date_Verified":"2025-12-11","Website":"","Phone":"847-357-4220","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"https://www.elkgrove.org/government/community-development/permits","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Ellsville","State":"Missouri","Type":"Residential","Date_Verified":"2025-06-30","Website":"","Phone":"","Email":"hwoodland@ellisville.mo.us (Holy Woodland)","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"No roof permit needed even with redecking.  Solar D&R prmit needed.  Window permit needed when full-frame replacements, changing window sizes, or converting doors to windows.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Eureka","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-11","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"no permits needed for reroof, siding, or windows (verified via email 12-9-24)","Roof_Mid":"No, not required","Roof_Mid_Photos":"No, not required","Roof_Final":"No, not required","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"No, not required","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Fairview Heights","State":"Illinois","Type":"Residential","Date_Verified":"2026-02-11","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"roof permit only if replacing 1/2 decking or more, siding no, gutters no, windows no if replacing same size only","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Farmington, City of","State":"New Mexico","Type":"Residential","Date_Verified":"","Website":"","Phone":"(505) 599-1320","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Call (505) 599-1320 to pull permits","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Fenton","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"636 937 4694","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"*follows St. Louis County permitting","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Ferguson City Of","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-12","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Solar D&R permit needed.  Window permit only when size of hole is changed.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a mid and final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Festus","State":"Missouri","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://www.festusmo.gov/formcenter/contractor-license-application-18/contractor-license-application-68","Phone":"636-937-4694","Email":"LSmith@festusmo.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Solar D&R permit needed.  Window permit only when size of hole is changed.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Window mid and final only needed if making structural changes.  Solar D&R need mid and final inspection.","Additional_Notes":""},{"Jurisdiction":"Firestone Town of","State":"Colorado","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://www.firestoneco.gov/425/Building-Permits-Fees","Phone":"303-531-6253","Email":"building@firestoneco.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www6.citizenserve.com/Portal/Login","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Florissant","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-12","Website":"https://my.florissantmo.com/#/construction-permit-guideline","Phone":"(314) 839-7648","Email":"publicworks@florissantmo.com","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://my.florissantmo.com/#/construction-permit-guideline","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"Solar D&R permit needed.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"Yes, final","Solar_Insp":"Yes","Inspection_Notes":"Window final in person inspection required.  Solar D&R needs in person mid and final inspections.","Additional_Notes":""},{"Jurisdiction":"Flossmoor","State":"Illinois","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.flossmoor.org/156/Permit-Fact-Sheets-Applications","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Fountain, City of","State":"Colorado","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://fountain.colorado.gov/business-license","Phone":"719-322-2031","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Franklin","State":"Ohio","Type":"Residential","Date_Verified":"2025-12-12","Website":"https://co-franklin-oh.smartgovcommunity.com/Public/Home","Phone":"614-525-3166","Email":"building@franklincountyohio.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://co-franklin-oh.smartgovcommunity.com/Public/Home","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Franklin County Of","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-12","Website":"https://www.franklinmo.org/permits","Phone":"(636) 583-6361","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"permits only needed if structural changes are involved","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"Yes","Inspection_Notes":"Solar D&R needs a final in person inspection.","Additional_Notes":""},{"Jurisdiction":"Fulton","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"business license required to work in city limits","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Glen Carbon Village Of","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"https://glencarbonil-energovpub.tylerhost.net/apps/selfservice#/dashboard","Phone":"(618) 288-1200","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"$70 fee must be paid with a CC.  No engineer's report for overlay, just need to be licensed.","Roof_Mid":"No, not required","Roof_Mid_Photos":"No, not required","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"Yes, final","Solar_Insp":"Yes","Inspection_Notes":"inspections@glen-carbon.il.us only need final inspections, no mid.","Additional_Notes":""},{"Jurisdiction":"Glendale","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"follows St Louis County","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Granite City","State":"Illinois","Type":"Residential","Date_Verified":"2026-03-23","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"Yes","Windows":"Yes","Solar":"Yes","Permit_Notes":"$40 roof only.  RGD $50.  Other based off cost of job","Roof_Mid":"No, not required","Roof_Mid_Photos":"No, not required","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"Yes","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Green Park","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Greenville","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"https://www.greenvilleillinois.com/index.asp?SEC=8C8108C3-1247-4408-BC8C-A1FEE93A70DE&DE=1F43404B-2E44-4329-AA7B-1D33CCC03488","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.greenvilleillinois.com/index.asp?SEC=8C8108C3-1247-4408-BC8C-A1FEE93A70DE&DE=1F43404B-2E44-4329-AA7B-1D33CCC03488","Roofing":"","Siding":"Yes","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Ham Lake","State":"Minnesota","Type":"Residential","Date_Verified":"2025-05-13","Website":"https://cityofdeephaven.org/building-permits/","Phone":"763-235-1691","Email":"bldgdept@hamlakemn.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"must have MN contractor license or must have City contractor license","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Tom Dietrich, Building Inspector, 763-235-1664, tdietrich@hamlakemn.gov","Additional_Notes":""},{"Jurisdiction":"Hazelwood","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.civicgov4.com/mo_hazelwood/portal/","Phone":"","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Hebron Village","State":"Illinois","Type":"Residential","Date_Verified":"2026-02-10","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Herculaneum, City of","State":"Missouri","Type":"Residential","Date_Verified":"0/31/2025","Website":"","Phone":"636-475-4447","Email":"info@cityofherculaneum.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"COI needed (can use EOI, evidence of insurability listing WC insurance coverage?)","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"636-306-4206  email:  Kelly at the city  kplouder@cityofherculaneum.gov   can email her the application, then mail the check.  Put Kelly on the pymt envelope","Additional_Notes":""},{"Jurisdiction":"High Ridge","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Follows Jefferson County. NPN for roof, NPN for any deck replacements 6-20-25 no permits needed for siding or same size windows 7-3-25","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Highland Heights","State":"Ohio","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.highlandhtsohio.gov/132/Permits","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Imperial","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Email residential building permit app to leonard@hillsboromo.org, once he gives the cost, send in check request, once permit is ready someone will need to pick up the permit card in person from the municipality to post on the jobsite (generally if the sales rep or manager is still in the area I ask if they can pick it up and bring to the jobsite)","Roof_Mid":"","Roof_Mid_Photos":"Yes, photos accepted","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Indianapolis Historic, City of","State":"Indiana","Type":"Residential","Date_Verified":"","Website":"check addresses here for historic districts","Phone":"317-327-4406","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Use link to check if historical, apply thru Indy link if it is","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Indianapolis, City of","State":"Indiana","Type":"Residential","Date_Verified":"","Website":"","Phone":"317-327-8700","Email":"contractors@indy.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://accela9ca.indy.gov/citizenaccess/","Roofing":"Roof permit req'd - see notes","Siding":"","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"Check each address for historic dist first!  NO notifications req'd eff 2026; Roof permit required if redecking or structural, For re-roofing = apply for structural, non-residential (Unless an apartment complex/condo, then apply for residential);  Email  PlanReview.Class1@Indy.Gov to check on permit status;","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Jefferson County","State":"Missouri","Type":"Residential","Date_Verified":"2025-07-03","Website":"https://www.civicgov4.com/mo_jeffersoncounty/portal/index.php?r=portalPosts/view&id=5","Phone":"(636) 797-5310","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.civicgov4.com/mo_jeffersoncounty/portal/index.php?r=site/login","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"NPN for roof, NPN for any deck replacements 6-20-25 no permits needed for siding or same size windows 7-3-25","Roof_Mid":"No, not required","Roof_Mid_Photos":"No, not required","Roof_Final":"No, not required","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"No, not required","Siding_Final":"No, not required","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"Yes","Inspection_Notes":"Solar Paels D&R:  A final inspection is generally required for grid-tied systems to ensure the reinstalled system adheres to safety standards. While requirements vary, a mid-inspection (or rough-in) may be required by local officials, particularly for electrical components.","Additional_Notes":""},{"Jurisdiction":"Jennings City Of","State":"Missouri","Type":"Residential","Date_Verified":"2026-02-09","Website":"","Phone":"(314) 388-1164","Email":"buildingdepartment@cityofjennings.org","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"email the city when a permit is needed and they will email you back the permit application.  email to  buildingdepartment@cityofjennings.org.  Have to pay in person via CC and bring ID.","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"Yes","Siding_Final":"Yes","Gutters_Insp":"No, not required","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"Roof mid (they will inspect starter strips and drip edge) and final in person inspection required if replacing sheathing someone does have to be at the property.  Window mid and final needed if altering the hole or making any structural changes.  Solar D&R in person mid and final inspection required.  Siding mid (house wrap) and final in person inspections required.","Additional_Notes":""},{"Jurisdiction":"Jersey City City of","State":"New Jersey","Type":"Residential","Date_Verified":"2026-01-20","Website":"https://www.jerseycitynj.gov/cityhall/housinganddevelopment","Phone":"201-547-5055","Email":"ConstructionCode@jcnj.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"Roof permit needed when <25% roof deck replaced","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"No, not required","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"No, not required","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"1-20-26 per Commissioner Mark if more than 25% roof deck is replaced, pull the roof permit, keep working & finish the roof, final insp."},{"Jurisdiction":"Joseph County City of South Bend","State":"Indiana","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Kingston Borough of","State":"Pennsylvania","Type":"Residential","Date_Verified":"2026-02-12","Website":"https://kingstonpa.org/zoning-and-permit-applications/","Phone":"570-288-4576 | 570-288-9493","Email":"secretary@kingstonpa.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"Send building permit applciation form to secretary@kingstonpa.org","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"Yes","Windows":"Yes","Solar":"Yes","Permit_Notes":"All scope of work requires permit","Roof_Mid":"No, not required","Roof_Mid_Photos":"Ice & Water photos Required","Roof_Final":"Yes, pictures req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"final inspection with a 3P inspector which we will see on the permit; email photos to inspector Neil (neil@bhwinspections.net) as a part of the final inspection, if roof redeck send roof sheath, I&W & flashing photos","Additional_Notes":""},{"Jurisdiction":"Kirkwood","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.kirkwoodmo.org/government/departments/building-division","Phone":"36-984-5900","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"Elite123!!","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"final inspection Renne 636 984-5900","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"\"contreg@wildwoodroof.com\" <contreg@wildwoodroof.com>","Additional_Notes":""},{"Jurisdiction":"Labadie","State":"Missouri","Type":"Residential","Date_Verified":"2025-09-04","Website":"","Phone":"636-583-6369","Email":"881164","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"No permit on roof unless replacing trusses. No permit on gutters, siding. Window d&r no permit unless changing the size, location. Solar permit requires permit.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"They will conduct the final inspection. The mid-inspection will be scheduled once the plans and application have been submitted.","Additional_Notes":""},{"Jurisdiction":"Ladue","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.cityofladue-mo.gov/departments/building_and_public_works/building/faqs.php","Phone":"314-997-6308","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"no roof, siding, gutter, or window permits needed per Stephanie 10-27-25","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Lake St Louis","State":"Missouri","Type":"Residential","Date_Verified":"2025-04-29","Website":"https://www.citizenserve.com/Portal/PortalController?Action=myAccount&original_iid=253&original_contactID=38231932","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"","Windows":"","Solar":"","Permit_Notes":"COI needed","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Lakewood, City of","State":"Ohio","Type":"Residential","Date_Verified":"2025-12-12","Website":"https://www.lakewoodoh.gov/accordions/contractor-registration/","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www6.citizenserve.com/Portal/PortalController?Action=showPermit&ctzPagePrefix=Portal_&installationID=279&original_iid=279&original_contactID=37961639","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Madison County","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"","Phone":"(618) 296-5237","Email":"zoning@co.madison.us","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.madisoncountyil.gov/departments/planning_and_development/permits_inspections.php","Roofing":"Yes, reroof permit req'd","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"permits take 24-48 hours to approve; send roof license w/permit app.  roof permit yes, siding no permit, gutters no permit, windows no permit if same size and no structural.  they will call you & can pay w/CC over the phone","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Manchester","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://manchestermo.gov/231/Building-Permits","Phone":"Lisa Wigger (Manchester Community Dev Coordinator) 636-227-1385  x124  lwigger@manchestermo.gov","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"follows St Louis County permittting: *A building permit is required to re-roof with asphalt shingles if Roof Slope is less than 4:12;  if more than 25% of Roof Sheathing requires replacement; if changing roof covering from existing; or Wood structural panel sheathing is required to replace existing board sheathing, because the gaps between the boards exceed space limits of the Code; SIDING -no permit needed when new aluminum, steel or vinyl exterior siding with no change to existing openings;","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"refer to St Louis County","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"if a roof permit is needed, first submit the MZA form, email to Manchester with Hover. When approved, you will pay $25 fee w/CC over the phone. Next you will apply for the actual permit w/St Louis County with Manchester Approval form.","Additional_Notes":""},{"Jurisdiction":"Maplewoood","State":"Missouri","Type":"Residential","Date_Verified":"2025-06-11","Website":"","Phone":"314-645-3600","Email":"","Contractor_Reg":true,"Business_License":true,"Permit_Portal":"","Roofing":"No, not required","Siding":"Yes","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"COI needed, evidence of insurability","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"no roof permit required unless more than 25% of roof deck is replaced or a complete overlay; no siding permits required, no window permits at this time; only a business license is required if a permit is pulled","Additional_Notes":""},{"Jurisdiction":"Marshall County","State":"Indiana","Type":"Residential","Date_Verified":"2025-12-12","Website":"https://www.co.marshall.in.us/","Phone":"574-935-8531","Email":"bldcomm@co.marshall.in.us","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://permits.schneidercorp.com/Contractor/ContractorProfile.aspx?&ContractorId=7310","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Marthasville","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"business license required to work in the city","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Middletown","State":"Delaware","Type":"","Date_Verified":"2025-12-03","Website":"https://www.middletown.delaware.gov/BusinessLicenses","Phone":"302-378-5675","Email":"permits&inspections@middletown.delaware.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Mundelein City of","State":"Illinois","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"New Castle","State":"Indiana","Type":"Residential","Date_Verified":"2025-12-09","Website":"","Phone":"765-521-6823","Email":"building-department@cityofnewcastle.net","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"New Mexico State","State":"New Mexico","Type":"Residential","Date_Verified":"","Website":"https://nmrld.force.com/MHD/s","Phone":"(505) 476-4500","Email":"","Contractor_Reg":true,"Business_License":true,"Permit_Portal":"https://nmrld.force.com/MHD/s","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Decking inspection is required after we take off the old roof even if we will not be changing or replacing it.","Additional_Notes":""},{"Jurisdiction":"North Ridgeville","State":"Ohio","Type":"","Date_Verified":"2025-12-08","Website":"https://www.nridgeville.org/","Phone":"40-490-2081","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Northglenn","State":"Colorado","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://www.northglenn.org/government/departments/building/contractor_license.php","Phone":"303-450-8745","Email":"building@northglenn.org","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://app.communitycore.com/app/contractors/69073/licenses/contractor-licenses","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"O'Fallon City of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.ofallon.mo.us/building-permits","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Oklahoma City","State":"Oklahoma","Type":"Residential","Date_Verified":"2026-01-14","Website":"","Phone":"405-297-2525","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"Accela Citizen Access","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"Yes","Permit_Notes":"","Roof_Mid":"No, not required","Roof_Mid_Photos":"Yes, photos accepted","Roof_Final":"Yes, pictures req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"Pictures of before, during (show decking), and after the work is required. Upload photos before scheduling final inspection","Additional_Notes":""},{"Jurisdiction":"olivette","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Olivette, City of","State":"Missouri","Type":"Residential","Date_Verified":"2025-06-24","Website":"https://www.olivettemo.com/193/Planning-Community-Development","Phone":"314-993-0444","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"https://www.olivettemo.com/193/Planning-Community-Development","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"email permit app, contract, & Hover to   permits@Olivettemo.com  they will email back $ total due","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Olmstead Township","State":"Ohio","Type":"Residential","Date_Verified":"","Website":"https://www.olmstedtownshipohio.gov/361/Contractor-Registration","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Orland Park Village of","State":"Illinois","Type":"","Date_Verified":"2025-12-09","Website":"https://www.orlandpark.org/departments/development-services/permits-licenses-inspections/permits","Phone":"708-403-6100","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://profile.tylerportico.com/portal/profile/activity/email","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Overland","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"314-428-4321","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"no roofnless replacing decking can not overlay rood deck with out a engineer report siding, gutters, or same for same windows permit needed","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Pacific","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"NPN for like for like and changes with the roof structural","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Pacific","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"NPN for like for like and changes with the roof structural","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Paradise Valley","State":"Arizona","Type":"Residential","Date_Verified":"","Website":"","Phone":"Permit Technician Chavez, Melissa 480-348-3556","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://aca-prod.accela.com/PARADISEVLY/Login.aspx","Roofing":"Roof permit needed when decking is replaced","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"No permit needed for roof, siding, and gutters like for like unless we will replace ply wood and sheathing. Also, please call first Juan Gonzales for all job to make sure that the property is not on a hillside. Window replacement always needs permit","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Parma Heights","State":"Ohio","Type":"","Date_Verified":"","Website":"https://parmaheightsoh.gov/building-department/","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Peoria City of","State":"Arizona","Type":"Residential","Date_Verified":"2026-01-26","Website":"https://www.peoriaaz.gov/","Phone":"623-773-7160","Email":"salestax@peoriaaz.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://devservices.peoriaaz.gov/devservices/Default.aspx","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"Yes","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"The 1st Inspection would be a roof sheathing inspection only if after tearing off all the old roofing material and there are some sheets that need to be replaced. At this point we would require a roof sheet nailing inspection. If no sheeting is being replaced, your 1st inspection would be inspection of the new roof under layment, paper, and flashing.  and final inspection (Todd Anderson inspector)","Additional_Notes":"for roof permits, must upload completed 400M MISC PERMIT APP into online portal"},{"Jurisdiction":"Pevely","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Pevely, City of","State":"Missouri","Type":"Residential","Date_Verified":"2025-05-14","Website":"","Phone":"636-475-4452","Email":"lmiles@cityofpevelymo.gov  (Linda)","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"contractors must be licensed in city in order to work within city limits, no permits are needed","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"COI needed (can use EOI, evidence of insurability listing WC insurance coverage)","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"CONTRACTOR LICENSE #17 EXPIRES 12/31/2026"},{"Jurisdiction":"Phoenix City of","State":"Arizona","Type":"Residential","Date_Verified":"","Website":"","Phone":"602-262-7811","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://shapephx.phoenix.gov/s/","Roofing":"Roof permit req'd - see notes","Siding":"Yes","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Per Patrick Scalf (Residential Plans Examiner II) , Re-roofing with the same type of material (tiles, shingles\u2026etc) as the original roofing will not require a permit.  However, if you repair or replace any structural components of the roof (sheathing/roof decking included) roof permit is needed.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"CONTRACTOR LICENSE NUMBER 17 EXPIRES 12/31/2026","Additional_Notes":""},{"Jurisdiction":"Pima County","State":"Arizona","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://aca-prod.accela.com/PIMA/Default.aspx","Roofing":"","Siding":"Yes, siding permit req'd when changing siding materials","Gutters":"No, not required","Windows":"No, not required","Solar":"Yes","Permit_Notes":"Structural engineer report needed if replacing roof deck on a trailer home/manufactured home","Roof_Mid":"Inspection must be in person","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Randolph County","State":"Indiana","Type":"","Date_Verified":"2025-12-01","Website":"https://www.in.gov/counties/randolph/departments/building-commission/contractor-registration/","Phone":"65-584-0275","Email":"bldcomsec@randolph.in.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Reynoldsburg","State":"Ohio","Type":"","Date_Verified":"2025-12-09","Website":"https://www.reynoldsburg.gov/157/Building-Department","Phone":"614-322-6802","Email":"permit@reynoldsburg.gov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.reynoldsburg.gov/157/Building-Department","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Richardson, City of","State":"Texas","Type":"Residential","Date_Verified":"2026-03-18","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://discovery.cor.gov/public/permits/onlinepermits.nsf/newAccount.html","Roofing":"Yes, reroof permit req'd","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Richmond Heights","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"no permits required unless structural changes","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Richmond Heights","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"no permits required unless structural changes","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Rio Rancho","State":"New Mexico","Type":"Residential","Date_Verified":"2026-02-09","Website":"Get a Permit | The Official Site of Rio Rancho, NM","Phone":"505-891-5005","Email":"permits@rrnm.gov","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"Building Inspection Division Forms | The Official Site of Rio Rancho, NM","Roofing":"Roof permit req'd - see notes","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Roof permit is needed even if it's like for like but no site plan is needed if we are also changing the sheathing/plywood. Only for structural changes","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Rock Hill","State":"Missouri","Type":"Residential","Date_Verified":"2026-03-18","Website":"https://www.rockhillmo.net/housing-zoning-department/pages/zoning","Phone":"314-968-1410","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"follows St Louis County.  Have to apply for permit through Rock Hill first then send through St. Louis County portal.  STL County will provide permit (Roch Hill Example note:  Remove and replace asphalt shingles with like kind materials.  Replace sheathing as needed (less than 25% as of right now), replace ice and water barrier and drip edge per code)","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Rock Island","State":"Illinois","Type":"Residential","Date_Verified":"2025-12-12","Website":"","Phone":"309-732-2910","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Seven Hills","State":"Ohio","Type":"Residential","Date_Verified":"2025-12-18","Website":"https://www.sevenhillsohio.org/building","Phone":"216-524-4427","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www6.citizenserve.com/Portal/PortalController","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Shaker Heights","State":"Ohio","Type":"","Date_Verified":"","Website":"Shaker Heights online permit portal","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"Shaker Heights online permit portal","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Silver City Town of","State":"New Mexico","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"St Ann","State":"Missouri","Type":"Residential","Date_Verified":"2025-06-13","Website":"https://www.citizenserve.com/Portal/PortalController?Action=showLogin&ctzPagePrefix=Portal_&installationID=253&original_iid=0&original_contactID=0","Phone":"314-427-8009","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"must either drop off permit app w/contract in person or by mail ONLY, include ice & water and drip edge details on app, get check from corp. when they call you with $ total (have it sent to local office because it has to be dropped off and permit has to be picked up in person!) M-F 8-4","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"","Siding_House_Wrap":"No, not required","Siding_Final":"No, not required","Gutters_Insp":"No, not required","Windows_Insp":"No, not required","Solar_Insp":"","Inspection_Notes":"must either drop off permit app w/contract in person or by mail ONLY, include ice & water and drip edge details on app, get check from corp. when they call you with $ total (have it sent to local office because it has to be dropped off and permit has to be picked up in person!) M-F 8-4","Additional_Notes":""},{"Jurisdiction":"St Charles","State":"Missouri","Type":"","Date_Verified":"","Website":"https://www.stcharlescitymo.gov/","Phone":"636-949-3200","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.stcharlescitymo.gov/943/Permits-Development-Submittals","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"St Louis, CITY of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"314-622-3313","Email":"tlcitypermits@stlouis-mo.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"*no permit required for roof replacement when done w/like material & replacement of 25% or less of the roof sheathing; new aluminum, steel or vinyl exterior siding with no change to existing openings  If project cost is over $3,000 then application fee is $25 + $10 per $1,000 construction cost; if project is less than $3,000 see website for fees","Roof_Mid":"No, not required","Roof_Mid_Photos":"","Roof_Final":"Yes,  must be in person","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"Yes, in progress & final","Solar_Insp":"Yes","Inspection_Notes":"*ALSO check the address to see if it is in a historic district","Additional_Notes":"Final Inspection only needed for roof.  No mid inspection."},{"Jurisdiction":"St Peters","State":"Missouri","Type":"Residential","Date_Verified":"2025-07-14","Website":"","Phone":"636-477-6600 x 1670","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"https://www.stpetersmo.net/360/Apply-for-Licenses-Permits","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"No permt on Shingles replacement like for like. Permit on roof will be applied for when there is 25% or more that will be repaired/replaced on sheathing. Permit will be applied for Solar D&R. When applying for permit, they also require St. Peters Business License .","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"No permt on Shingles replacement like for like. Permit on roof will be applied for when there is 25% or more that will be repaired/replaced on sheathing. Permit will be applied for Solar D&R. When applying for permit, they also require St. Peters Business License .","Additional_Notes":"if a roof permit is ordered after work is started because of deck replacement, call the bldg dept too & explain the situation-permits can take 7-10 days"},{"Jurisdiction":"St. Louis County","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"Permits & Applications - St. Louis County Website","Phone":"314-615-5184","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"Permits & Applications - St. Louis County Website","Roofing":"Roof permit req'd - see notes","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"","Permit_Notes":"St Louis County permittting: *A building permit is required to re-roof with asphalt shingles if Roof Slope is less than 4:12;  if more than 25% of Roof Sheathing requires replacement; if changing roof covering from existing; or Wood structural panel sheathing is required to replace existing board sheathing, because the gaps between the boards exceed space limits of the Code; SIDING -no permit needed when new aluminum, steel or vinyl exterior siding with no change to existing openings;","Roof_Mid":"Yes","Roof_Mid_Photos":"Ice & Water photos Required","Roof_Final":"Yes, no attendance req'd","Roof_Final_Photos":"Yes","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"314-615-5184                                                                                                                                                                                                                   314-615-7110 Mr. Hatton bhatton@stlouiscountymo.gov","Additional_Notes":"use the permit wizard                                                                                                                                       Link to check if the address is in St. Louis County                                  https://revenue.stlouisco.com/RealEstate/SearchInput.aspx                                                                                    As per confirmation of Mr. Hatton of St. Louis County there no permit for windows/skylights r&r as long as same material, location will be done."},{"Jurisdiction":"State","State":"Utah","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"State","State":"Arkansas","Type":"","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Streetsboro","State":"Ohio","Type":"","Date_Verified":"","Website":"https://www.cityofstreetsboro.com/departments/building-department/","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.cityofstreetsboro.com/departments/building-department/","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Sullivan","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.sullivan.mo.us/forms/building_permits/index.php#revize_document_center_rz75","Phone":"","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"Don, building inspector","Roofing":"Yes, reroof permit req'd","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"Must inform the Building Division - Inspection Section twenty-four (24) hours before starting construction work","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Sunset Hills","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"Lisa Ordway- Secretary of State (Transient Employment Certificate) 573-751-0459","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"they follow st Louis County Code","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"When applying for permit they require business license, transient employment certificate that will be from the state of MO. They're requesting a physical copy to be uploaded to the portal and can be requested by contacting the Secretary of State -- Lisa Ordway. Zoning approval will be the Sunset Hills.","Additional_Notes":""},{"Jurisdiction":"Thornton Village of","State":"Illinois","Type":"","Date_Verified":"2025-11-26","Website":"https://www.thorntonil.us/building-department","Phone":"708-877-4456","Email":"ebrozowski@thorntonil.us","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Toledo","State":"Ohio","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://applyforpermits.toledo.oh.gov/portal/home/welcome","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Tucson City of","State":"Arizona","Type":"COMMERCIAL","Date_Verified":"2026-01-20","Website":"tdc-online.tucsonaz.gov","Phone":"520-791-5550","Email":"pdsdinquiries@tucsonaz.gov","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://cityoftucsonaz-energovweb.tylerhost.net/apps/selfservice#/home","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Submit site plan and construction plan signed and sealed by AZ professional. We can put both the siding and roofing in just one permit application.","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"University City","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://web.mygov.us/login/","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://web.mygov.us/login/","Roofing":"","Siding":"No, not required","Gutters":"No, not required","Windows":"Yes","Solar":"No, not required","Permit_Notes":"https://web.mygov.us/login/PASSWORD eLITE123!","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"(314) 505-8500 or by sending an email to: Inspections@ucitymo.org","Additional_Notes":"314-862-6767 /  (314) 505-8500 / (314)"},{"Jurisdiction":"Utah ID","State":"Utah","Type":"","Date_Verified":"2025-12-08","Website":"https://id.utah.gov/profile/dashboard","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Warrensville Heights","State":"Ohio","Type":"","Date_Verified":"","Website":"https://www6.citizenserve.com/Portal/PortalController?Action=showHomePage&ctzPagePrefix=Portal_&installationID=369","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"WARRENTON","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"www.warrenton-mo.org/building-department/","Phone":"636-456-3535","Email":"dingram@warrenton-mo.org","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"Email diane.ingram@warrenton-mo.orgto pay for contractor registation","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Washington","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://ci-washington-mo.smartgovcommunity.com/Public/Home?_conv=1","Phone":"636-390-1010","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://ci-washington-mo.smartgovcommunity.com/Public/Home?_conv=1","Roofing":"","Siding":"if siding only, No permit required","Gutters":"Yes-see notes","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"gutters permit for jobs over 6000.00 or major repairs","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"julie.marsteller@123exteriors.com","Additional_Notes":"123Exteriors"},{"Jurisdiction":"Watertown","State":"South Dakota","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://watertownsd.portal.opengov.com/","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Wayzata City of","State":"Minnesota","Type":"Residential","Date_Verified":"2025-10-01","Website":"https://forms.wayzata.org/Forms/PermitApplication","Phone":"952-404-5300","Email":"permits@wayzata.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://forms.wayzata.org/Forms/PermitApplication","Roofing":"Yes, reroof permit req'd","Siding":"Yes","Gutters":"No, not required","Windows":"Yes","Solar":"","Permit_Notes":"Jason Wagner- 952-404-5311   No contreg or business license needed","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Webster Groves","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.webstergrovesmo.gov/DocumentCenter","Phone":"314-963-5300","Email":"citymail@webstergrovesmo.cov","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"if siding only, No permit required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"can email app & COI & DL to citymail@webstergrovesmo.gov  then pay at the online website; no certificate will be issued ERICA REED","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Weldon Spring","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"https://www.bing.com/ck/a?!&&p=9b76dbfc31a66aabcd4119b856b9b49364c6aa2707830a19c96638da3f97e44eJmltdHM9MTc3MDI0OTYwMA&ptn=3&ver=2&hsh=4&fclid=29d95a92-b40a-69cc-10ac-4c06b5fc68fd&u=a1aHR0cHM6Ly93d3cuc2NjbW8ub3JnLzE5OTIvQnVpbGRpbmctUGVybWl0LUluZm9ybWF0aW9u&ntb=1","Phone":"636-949-7345","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"must folow st charles building requirements","Additional_Notes":""},{"Jurisdiction":"Wentzville, City of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"they follow St. Louis County on permitting they have an online portal to apply for the MZA","Phone":"","Email":"","Contractor_Reg":false,"Business_License":true,"Permit_Portal":"they follow St. Louis County on permitting they have an online portal to apply for the MZA","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"COI NEEDED PAY 50.00 OVER THE PHONE WITH REDIT CARD","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":"registered under Mike Braun b/c DL must be attached to registration"},{"Jurisdiction":"Westlake","State":"Ohio","Type":"","Date_Verified":"2025-12-31","Website":"https://www.cityofwestlake.org/","Phone":"440-235-4225","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://www.cityofwestlake.org/o/cw/page/permits-and-contractor-info","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Wheat Ridge","State":"Colorado","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://wheatridgeco.portal.opengov.com/dashboard","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"WilburPark, Village of","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Wildwood","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://www.cityofwildwood.com/DocumentCenter/View/197/Work-That-Does-Not-Require-a-Permit?bidId=","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"they follow St. Louis County on permitting they have an online portal to apply for the MZA","Additional_Notes":"contreg@wildwoodroof.com  password elite123!  50.00"},{"Jurisdiction":"Will County Land Use Department","State":"Illinois","Type":"","Date_Verified":"2025-12-08","Website":"https://willcounty.gov/County-Offices/Economic-Development/Will-County-Land-Use-Department","Phone":"815-727-8634","Email":"building@willcountylanduse.com","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"https://co-will-il.smartgovcommunity.com/Public/Home","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Winfield","State":"Kansas","Type":"","Date_Verified":"","Website":"https://www.winfieldks.org/","Phone":"620-221-5520","Email":"permits@winfieldks.org","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://winselfservice.winfieldks.org/EnerGov_Prod/SelfService#/applicationAssistant?sectionName=All&moduleId=2&categoryName=All&showTemplates=false","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Woodbury","State":"Minnesota","Type":"Residential","Date_Verified":"2025-12-12","Website":"","Phone":"","Email":"","Contractor_Reg":false,"Business_License":false,"Permit_Portal":"https://wdby-trk.aspgov.com/eTRAKiT/dashboard.aspx","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"Wright City","State":"Missouri","Type":"Residential","Date_Verified":"2025-12-09","Website":"https://wrightcity.org/forms/","Phone":"636-745-3101","Email":"cityclerk@wrightcity.org","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"","Siding":"","Gutters":"","Windows":"","Solar":"","Permit_Notes":"","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"","Additional_Notes":""},{"Jurisdiction":"","State":"Missouri","Type":"Residential","Date_Verified":"","Website":"","Phone":"","Email":"","Contractor_Reg":true,"Business_License":false,"Permit_Portal":"","Roofing":"No, not required","Siding":"No, not required","Gutters":"No, not required","Windows":"No, not required","Solar":"No, not required","Permit_Notes":"follows St Louis County -issue their own permits","Roof_Mid":"","Roof_Mid_Photos":"","Roof_Final":"","Roof_Final_Photos":"","Siding_House_Wrap":"","Siding_Final":"","Gutters_Insp":"","Windows_Insp":"","Solar_Insp":"","Inspection_Notes":"COI needed","Additional_Notes":""}];
+
+const FIELDS = [
+  // [key, label, type, group, span]
+  // group: 'contact','permit','inspection'
+  // type: 'text','tel','email','url','select-bool','select-permit','textarea','date'
+  ['Jurisdiction',      'Jurisdiction',          'text',          'contact', 'half'],
+  ['State',             'State',                 'text',          'contact', 'half'],
+  ['Type',              'Type (Res/Com)',        'text',          'contact', 'half'],
+  ['Date_Verified',     'Date Last Verified',    'date',          'contact', 'half'],
+  ['Phone',             'Phone',                 'tel',           'contact', 'half'],
+  ['Email',             'Email',                 'email',         'contact', 'half'],
+  ['Website',           'Website',               'url',           'contact', 'full'],
+  ['Contractor_Reg',    'Contractor Reg Req?',   'select-bool',   'contact', 'half'],
+  ['Business_License',  'Business License Req?', 'select-bool',   'contact', 'half'],
+  ['Permit_Portal',     'Permit Portal URL',     'url',           'permit',  'full'],
+  ['Roofing',           'Roofing',               'text',          'permit',  'half'],
+  ['Siding',            'Siding',                'text',          'permit',  'half'],
+  ['Gutters',           'Gutters',               'text',          'permit',  'half'],
+  ['Windows',           'Windows (R&R)',         'text',          'permit',  'half'],
+  ['Solar',             'Solar (D&R)',           'text',          'permit',  'half'],
+  ['Permit_Notes',      'Permit Notes',          'textarea',      'permit',  'full'],
+  ['Roof_Mid',          'Roof — Mid',            'text',          'inspection','half'],
+  ['Roof_Mid_Photos',   'Roof Mid Photos',       'text',          'inspection','half'],
+  ['Roof_Final',        'Roof — Final',          'text',          'inspection','half'],
+  ['Roof_Final_Photos', 'Roof Final Photos',     'text',          'inspection','half'],
+  ['Siding_House_Wrap', 'Siding — House Wrap',   'text',          'inspection','half'],
+  ['Siding_Final',      'Siding — Final',        'text',          'inspection','half'],
+  ['Gutters_Insp',      'Gutters Inspection',    'text',          'inspection','half'],
+  ['Windows_Insp',      'Windows (R&R) Insp',    'text',          'inspection','half'],
+  ['Solar_Insp',        'Solar (D&R) Insp',      'text',          'inspection','half'],
+  ['Inspection_Notes',  'Inspection Notes',       'textarea',      'inspection','full'],
+  ['Additional_Notes',  'Additional Notes',       'textarea',      'inspection','full'],
+];
+
+const GROUPS = {
+  contact:    'Contact Information',
+  permit:     'Permit Requirements',
+  inspection: 'Inspection Requirements'
+};
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let sortCol = 'Jurisdiction', sortAsc = true;
+let filtered = [];
+let panelMode = ''; // 'view','edit','add'
+let activeRecord = null;
+let activeIdx = -1;
+let confirmCallback = null;
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function init() {
+  populateStates();
+  applyFilters();
+  updateCount();
+
+  $('searchInput').addEventListener('input', applyFilters);
+  $('stateFilter').addEventListener('change', applyFilters);
+  $('overlay').addEventListener('click', closePanel);
+  $('detailClose').addEventListener('click', closePanel);
+  $('addBtn').addEventListener('click', openAdd);
+  $('syncBtn').addEventListener('click', syncFromSheet);
+  $('confirmCancel').addEventListener('click', closeConfirm);
+  $('confirmOk').addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeConfirm(); });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeConfirm(); closePanel(); }
+  });
+
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+      document.querySelectorAll('thead th').forEach(t => t.classList.remove('sorted'));
+      th.classList.add('sorted');
+      th.querySelector('.sort-arrow').textContent = sortAsc ? '▲' : '▼';
+      applyFilters();
+    });
+  });
+
+  // Auto-fetch from Google Sheet on load
+  if (GAS_URL) {
+    autoSync();
+  }
+}
+
+async function autoSync() {
+  const btn = $('syncBtn');
+  btn.classList.add('syncing');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Loading...';
+  try {
+    const res = await fetch(GAS_URL);
+    const json = await res.json();
+    if (json && Array.isArray(json) && json.length) {
+      DATA = json;
+      populateStates();
+      applyFilters();
+      updateCount();
+      toast(`Loaded ${DATA.length} jurisdictions from sheet`);
+    }
+  } catch (e) {
+    console.warn('Auto-sync failed, using embedded data:', e);
+    toast('Using offline data — sheet sync failed', 'info');
+  }
+  btn.classList.remove('syncing');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sync';
+}
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function linkify(s) {
+  if (!s) return '—';
+  s = esc(s);
+  return s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  el.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
+  $('toastContainer').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ══════════════════════════════════════════════
+//  CONFIRM DIALOG
+// ══════════════════════════════════════════════
+function showConfirm(title, msg, cb) {
+  $('confirmTitle').textContent = title;
+  $('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  $('confirmOverlay').classList.add('open');
+}
+function closeConfirm() {
+  $('confirmOverlay').classList.remove('open');
+  confirmCallback = null;
+}
+
+// ══════════════════════════════════════════════
+//  FILTERS & TABLE
+// ══════════════════════════════════════════════
+function updateCount() {
+  $('totalCount').textContent = DATA.length + ' jurisdictions';
+}
+
+function populateStates() {
+  const states = [...new Set(DATA.map(r => r.State).filter(Boolean))].sort();
+  const sel = $('stateFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All States</option>';
+  states.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  sel.value = cur;
+}
+
+function permitCategory(val) {
+  if (!val) return 'none';
+  const v = val.toLowerCase();
+  if (v.includes('no, not required') || v.includes('no permits') || v === 'no') return 'no';
+  if (v.includes('yes') || v.includes("req'd") || v.includes('required') || v.includes('permit needed')) return 'yes';
+  if (v.includes('see notes') || v.includes('unless') || v.includes('only when') || v.includes('if ')) return 'conditional';
+  return 'none';
+}
+
+function applyFilters() {
+  const q = $('searchInput').value.toLowerCase().trim();
+  const state = $('stateFilter').value;
+  filtered = DATA.filter(r => {
+    if (q && !r.Jurisdiction.toLowerCase().includes(q) && !r.State.toLowerCase().includes(q) && !(r.Phone||'').toLowerCase().includes(q) && !(r.Email||'').toLowerCase().includes(q)) return false;
+    if (state && r.State !== state) return false;
+    return true;
+  });
+  filtered.sort((a, b) => {
+    let va = (a[sortCol] || '').toString().toLowerCase();
+    let vb = (b[sortCol] || '').toString().toLowerCase();
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  renderTable();
+}
+
+function makeBadge(val, type) {
+  if (!val && type === 'permit') return '<span class="badge badge-no">—</span>';
+  if (type === 'bool') {
+    return (val === true || val === 'true' || val === 'True' || val === 'Yes')
+      ? '<span class="badge badge-true">Required</span>'
+      : '<span class="badge badge-false">No</span>';
+  }
+  const cat = permitCategory(val);
+  if (cat === 'yes') return '<span class="badge badge-yes">Required</span>';
+  if (cat === 'no') return '<span class="badge badge-no">Not Req\'d</span>';
+  if (cat === 'conditional') return '<span class="badge badge-conditional">Conditional</span>';
+  return '<span class="badge badge-no">—</span>';
+}
+
+function renderTable() {
+  const tbody = $('tableBody');
+  const empty = $('emptyState');
+  if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = 'block'; $('resultCount').textContent = '0 results'; return; }
+  empty.style.display = 'none';
+  $('resultCount').textContent = filtered.length + ' result' + (filtered.length !== 1 ? 's' : '');
+
+  tbody.innerHTML = filtered.map((r, i) => `
+    <tr>
+      <td class="jurisdiction" data-idx="${i}">${esc(r.Jurisdiction)}</td>
+      <td class="state-cell">${esc(r.State)}</td>
+      <td>${esc(r.Phone)}</td>
+      <td>${makeBadge(r.Roofing, 'permit')}</td>
+      <td>${makeBadge(r.Siding, 'permit')}</td>
+      <td>${makeBadge(r.Gutters, 'permit')}</td>
+      <td>${makeBadge(r.Windows, 'permit')}</td>
+      <td>${makeBadge(r.Solar, 'permit')}</td>
+      <td>${makeBadge(r.Contractor_Reg, 'bool')}</td>
+      <td class="actions-cell">
+        <button class="row-action edit" data-idx="${i}" title="Edit">✎</button>
+        <button class="row-action delete" data-idx="${i}" title="Delete">✕</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Event delegation
+  tbody.addEventListener('click', handleTableClick, false);
+}
+
+function handleTableClick(e) {
+  const editBtn = e.target.closest('.row-action.edit');
+  const deleteBtn = e.target.closest('.row-action.delete');
+  const row = e.target.closest('tr');
+  if (editBtn) {
+    e.stopPropagation();
+    const r = filtered[+editBtn.dataset.idx];
+    const dataIdx = DATA.indexOf(r);
+    openEdit(r, dataIdx);
+    return;
+  }
+  if (deleteBtn) {
+    e.stopPropagation();
+    const r = filtered[+deleteBtn.dataset.idx];
+    const dataIdx = DATA.indexOf(r);
+    confirmDelete(r, dataIdx);
+    return;
+  }
+  if (row) {
+    const td = row.querySelector('td[data-idx]');
+    if (td) openView(filtered[+td.dataset.idx]);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  VIEW PANEL
+// ══════════════════════════════════════════════
+function openView(r) {
+  panelMode = 'view';
+  activeRecord = r;
+  activeIdx = DATA.indexOf(r);
+  $('detailTitle').textContent = r.Jurisdiction;
+  $('detailSub').textContent = [r.State, r.Type, r.Date_Verified ? 'Verified: ' + r.Date_Verified : ''].filter(Boolean).join(' · ');
+
+  $('detailBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Contact Information</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Phone</label><div class="val">${r.Phone ? '<a href="tel:'+esc(r.Phone)+'">'+esc(r.Phone)+'</a>' : '—'}</div></div>
+        <div class="detail-field"><label>Email</label><div class="val">${r.Email ? '<a href="mailto:'+esc(r.Email)+'">'+esc(r.Email)+'</a>' : '—'}</div></div>
+        <div class="detail-field full"><label>Website</label><div class="val">${r.Website ? '<a href="'+esc(r.Website)+'" target="_blank">'+esc(r.Website)+'</a>' : '—'}</div></div>
+        <div class="detail-field full"><label>Permit Portal</label><div class="val">${r.Permit_Portal ? '<a href="'+esc(r.Permit_Portal)+'" target="_blank">'+esc(r.Permit_Portal)+'</a>' : '—'}</div></div>
+        <div class="detail-field"><label>Contractor Reg</label><div class="val">${makeBadge(r.Contractor_Reg,'bool')}</div></div>
+        <div class="detail-field"><label>Business License</label><div class="val">${makeBadge(r.Business_License,'bool')}</div></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Permit Requirements</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Roofing</label><div class="val">${makeBadge(r.Roofing,'permit')} ${esc(r.Roofing)}</div></div>
+        <div class="detail-field"><label>Siding</label><div class="val">${makeBadge(r.Siding,'permit')} ${esc(r.Siding)}</div></div>
+        <div class="detail-field"><label>Gutters</label><div class="val">${makeBadge(r.Gutters,'permit')} ${esc(r.Gutters)}</div></div>
+        <div class="detail-field"><label>Windows (R&R)</label><div class="val">${makeBadge(r.Windows,'permit')} ${esc(r.Windows)}</div></div>
+        <div class="detail-field"><label>Solar (D&R)</label><div class="val">${makeBadge(r.Solar,'permit')} ${esc(r.Solar)}</div></div>
+      </div>
+      ${r.Permit_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Permit Notes</label><div class="detail-notes">'+linkify(r.Permit_Notes)+'</div></div>' : ''}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Inspection Requirements</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>Roof — Mid</label><div class="val">${esc(r.Roof_Mid) || '—'}</div></div>
+        <div class="detail-field"><label>Roof Mid Photos</label><div class="val">${esc(r.Roof_Mid_Photos) || '—'}</div></div>
+        <div class="detail-field"><label>Roof — Final</label><div class="val">${esc(r.Roof_Final) || '—'}</div></div>
+        <div class="detail-field"><label>Roof Final Photos</label><div class="val">${esc(r.Roof_Final_Photos) || '—'}</div></div>
+        <div class="detail-field"><label>Siding — House Wrap</label><div class="val">${esc(r.Siding_House_Wrap) || '—'}</div></div>
+        <div class="detail-field"><label>Siding — Final</label><div class="val">${esc(r.Siding_Final) || '—'}</div></div>
+        <div class="detail-field"><label>Gutters</label><div class="val">${esc(r.Gutters_Insp) || '—'}</div></div>
+        <div class="detail-field"><label>Windows (R&R)</label><div class="val">${esc(r.Windows_Insp) || '—'}</div></div>
+        <div class="detail-field"><label>Solar (D&R)</label><div class="val">${esc(r.Solar_Insp) || '—'}</div></div>
+      </div>
+      ${r.Inspection_Notes ? '<div class="detail-field full" style="margin-top:12px;"><label>Inspection Notes</label><div class="detail-notes">'+linkify(r.Inspection_Notes)+'</div></div>' : ''}
+    </div>
+    ${r.Additional_Notes ? '<div class="detail-section"><div class="detail-section-title">Additional Notes</div><div class="detail-notes">'+linkify(r.Additional_Notes)+'</div></div>' : ''}
+  `;
+
+  $('formActions').style.display = 'flex';
+  $('formActions').innerHTML = `
+    <button class="btn btn-danger" id="panelDeleteBtn">Delete</button>
+    <button class="btn btn-edit" id="panelEditBtn">Edit</button>
+  `;
+  $('panelEditBtn').addEventListener('click', () => openEdit(activeRecord, activeIdx));
+  $('panelDeleteBtn').addEventListener('click', () => confirmDelete(activeRecord, activeIdx));
+  showPanel();
+}
+
+// ══════════════════════════════════════════════
+//  FORM (ADD / EDIT)
+// ══════════════════════════════════════════════
+function buildForm(record) {
+  let html = '';
+  let currentGroup = '';
+  for (const [key, label, type, group, span] of FIELDS) {
+    if (group !== currentGroup) {
+      if (currentGroup) html += '</div></div>';
+      currentGroup = group;
+      html += `<div class="detail-section"><div class="detail-section-title">${GROUPS[group]}</div><div class="form-grid">`;
+    }
+    const val = record ? (record[key] ?? '') : '';
+    const cls = span === 'full' ? ' full' : '';
+
+    if (type === 'select-bool') {
+      const yesS = (val === true || val === 'Yes' || val === 'true' || val === 'True') ? ' selected' : '';
+      const noS = (!val || val === false || val === 'No' || val === 'false' || val === 'False') ? ' selected' : '';
+      html += `<div class="form-field${cls}"><label>${label}</label>
+        <select name="${key}"><option value="No"${noS}>No</option><option value="Yes"${yesS}>Yes</option></select></div>`;
+    } else if (type === 'textarea') {
+      html += `<div class="form-field${cls}"><label>${label}</label>
+        <textarea name="${key}" rows="3">${esc(val)}</textarea></div>`;
+    } else {
+      const inputType = type === 'date' ? 'date' : type === 'tel' ? 'tel' : type === 'email' ? 'email' : type === 'url' ? 'url' : 'text';
+      html += `<div class="form-field${cls}"><label>${label}</label>
+        <input type="${inputType}" name="${key}" value="${esc(val)}"></div>`;
+    }
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function readForm() {
+  const record = {};
+  for (const [key, , type] of FIELDS) {
+    const el = $('detailBody').querySelector(`[name="${key}"]`);
+    if (!el) continue;
+    if (type === 'select-bool') {
+      record[key] = el.value === 'Yes';
+    } else {
+      record[key] = el.value.trim();
+    }
+  }
+  return record;
+}
+
+function openAdd() {
+  panelMode = 'add';
+  activeRecord = null;
+  activeIdx = -1;
+  $('detailTitle').textContent = 'Add New Jurisdiction';
+  $('detailSub').textContent = 'Fill in jurisdiction details below';
+  $('detailBody').innerHTML = buildForm(null);
+  $('formActions').style.display = 'flex';
+  $('formActions').innerHTML = `
+    <button class="btn btn-ghost" id="formCancel">Cancel</button>
+    <button class="btn btn-primary" id="formSave">Add Jurisdiction</button>
+  `;
+  $('formCancel').addEventListener('click', closePanel);
+  $('formSave').addEventListener('click', saveNew);
+  showPanel();
+  // Focus first field
+  const first = $('detailBody').querySelector('input');
+  if (first) setTimeout(() => first.focus(), 350);
+}
+
+function openEdit(r, dataIdx) {
+  panelMode = 'edit';
+  activeRecord = r;
+  activeIdx = dataIdx;
+  $('detailTitle').textContent = 'Edit: ' + r.Jurisdiction;
+  $('detailSub').textContent = [r.State, r.Type].filter(Boolean).join(' · ');
+  $('detailBody').innerHTML = buildForm(r);
+  $('formActions').style.display = 'flex';
+  $('formActions').innerHTML = `
+    <button class="btn btn-ghost" id="formCancel">Cancel</button>
+    <button class="btn btn-danger" id="formDelete">Delete</button>
+    <button class="btn btn-primary" id="formSave">Save Changes</button>
+  `;
+  $('formCancel').addEventListener('click', () => openView(r));
+  $('formDelete').addEventListener('click', () => confirmDelete(r, dataIdx));
+  $('formSave').addEventListener('click', saveEdit);
+  showPanel();
+}
+
+// ══════════════════════════════════════════════
+//  CRUD OPERATIONS
+// ══════════════════════════════════════════════
+function saveNew() {
+  const record = readForm();
+  if (!record.Jurisdiction) { toast('Jurisdiction is required', 'error'); return; }
+  if (!record.State) { toast('State is required', 'error'); return; }
+  DATA.push(record);
+  populateStates();
+  applyFilters();
+  updateCount();
+  closePanel();
+  toast(`${record.Jurisdiction} added successfully`);
+  saveToSheet('add', record);
+}
+
+function saveEdit() {
+  const updated = readForm();
+  if (!updated.Jurisdiction) { toast('Jurisdiction is required', 'error'); return; }
+  if (!updated.State) { toast('State is required', 'error'); return; }
+  // Merge into existing record
+  Object.assign(DATA[activeIdx], updated);
+  populateStates();
+  applyFilters();
+  closePanel();
+  toast(`${updated.Jurisdiction} updated successfully`);
+  saveToSheet('edit', updated, activeIdx);
+}
+
+function confirmDelete(r, dataIdx) {
+  showConfirm(
+    'Delete Jurisdiction',
+    `Are you sure you want to delete "${r.Jurisdiction}, ${r.State}"? This action cannot be undone.`,
+    () => {
+      DATA.splice(dataIdx, 1);
+      populateStates();
+      applyFilters();
+      updateCount();
+      closePanel();
+      toast(`${r.Jurisdiction} deleted`, 'info');
+      saveToSheet('delete', r, dataIdx);
+    }
+  );
+}
+
+// ══════════════════════════════════════════════
+//  GOOGLE SHEET SYNC
+// ══════════════════════════════════════════════
+async function saveToSheet(action, record, rowIndex) {
+  if (!GAS_URL) return;
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action, record, rowIndex }),
+      mode: 'no-cors'
+    });
+  } catch (e) {
+    console.warn('Sheet sync failed:', e);
+  }
+}
+
+async function syncFromSheet() {
+  if (!GAS_URL) { toast('Apps Script URL not configured', 'error'); return; }
+  const btn = $('syncBtn');
+  btn.classList.add('syncing');
+  btn.textContent = 'Syncing...';
+  try {
+    const res = await fetch(GAS_URL);
+    const json = await res.json();
+    if (json && json.length) {
+      DATA = json;
+      populateStates();
+      applyFilters();
+      updateCount();
+      toast(`Synced ${DATA.length} jurisdictions from sheet`);
+    } else {
+      toast('No data returned from sheet', 'error');
+    }
+  } catch (e) {
+    toast('Sync failed: ' + e.message, 'error');
+  }
+  btn.classList.remove('syncing');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Sync';
+}
+
+// ══════════════════════════════════════════════
+//  PANEL OPEN / CLOSE
+// ══════════════════════════════════════════════
+function showPanel() {
+  $('overlay').classList.add('open');
+  $('detailPanel').classList.add('open');
+}
+function closePanel() {
+  $('overlay').classList.remove('open');
+  $('detailPanel').classList.remove('open');
+  $('formActions').style.display = 'none';
+  panelMode = '';
+}
+
+init();
+</script>
+</body>
+</html>
